@@ -23,14 +23,13 @@ import yaml
 
 # set GDAL the python way
 gdal.UseExceptions()
-gdal.SetConfigOption('GDAL_CACHEMAX', '512')
 
 # set print as standard log method
 logs = print
 
 
 def generate_classification_from_mosaics(file_10m: Path, file_20m: Path, workspace: Path, training: Path,
-                                         classes: List[int], minimal_support=100) -> Iterable[Path]:
+                                         classes: List[int], minimal_support=100, quantization_levels=8) -> Iterable[Path]:
     """
     Generate classification results at 10 and 20 meters for both domains A and B from S2 mosaics (GeoTIFF format)
 
@@ -45,26 +44,32 @@ def generate_classification_from_mosaics(file_10m: Path, file_20m: Path, workspa
     :param classes: List[int]
         the list of classes to extract from data
     :param minimal_support: int
-        the minimal support value can be any integer (default is 100)
+        the minimal support value can be any positive integer (default is 100)
+    :param quantization_levels:
+        the number of quantization levels can be any positive integer (default is 8)
 
     :return: Iterable[Path]
         the complete path to all classified results saved on disk
     """
 
     cl_a_10m_file, phi_a_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes, minimal_support=minimal_support,
+                                                   training=training, classes=classes,
+                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                    suffix='A', pixres=10)
 
     cl_b_10m_file, phi_b_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes, minimal_support=minimal_support,
+                                                   training=training, classes=classes,
+                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                    suffix='B', pixres=10)
 
     cl_a_20m_file, phi_a_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes, minimal_support=minimal_support,
+                                                   training=training, classes=classes,
+                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                    suffix='A', pixres=20)
 
     cl_b_20m_file, phi_b_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes, minimal_support=minimal_support,
+                                                   training=training, classes=classes,
+                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                    suffix='B', pixres=20)
 
     return (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file,
@@ -72,7 +77,7 @@ def generate_classification_from_mosaics(file_10m: Path, file_20m: Path, workspa
 
 
 def generate_classification_from_safe(filesafe: Path, workspace: Path, training: Path, classes: List[int],
-                                      minimal_support=100) -> Iterable[Path]:
+                                      minimal_support=100, quantization_levels=8) -> Iterable[Path]:
     """
     Generate classification results at 10 and 20 meters for both domains A and B from a S2 input (.SAFE or .zip)
 
@@ -85,26 +90,32 @@ def generate_classification_from_safe(filesafe: Path, workspace: Path, training:
     :param classes: List[int]
         the list of classes to extract from data
     :param minimal_support: int
-        the minimal support value can be any integer (default is 100)
+        the minimal support value can be any positive integer (default is 100)
+    :param quantization_levels:
+        the number of quantization levels can be any positive integer (default is 8)
 
     :return: Iterable[Path]
         the complete path to all classified results saved on disk
     """
 
-    cl_a_10m_file, phi_a_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace, training=training,
-                                                             classes=classes, minimal_support=minimal_support,
+    cl_a_10m_file, phi_a_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                             training=training, classes=classes,
+                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                              suffix='A', pixres=10)
 
-    cl_b_10m_file, phi_b_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace, training=training,
-                                                             classes=classes, minimal_support=minimal_support,
+    cl_b_10m_file, phi_b_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                             training=training, classes=classes,
+                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                              suffix='B', pixres=10)
 
-    cl_a_20m_file, phi_a_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace, training=training,
-                                                             classes=classes, minimal_support=minimal_support,
+    cl_a_20m_file, phi_a_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                             training=training, classes=classes,
+                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                              suffix='A', pixres=20)
 
-    cl_b_20m_file, phi_b_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace, training=training,
-                                                             classes=classes, minimal_support=minimal_support,
+    cl_b_20m_file, phi_b_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                             training=training, classes=classes,
+                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                              suffix='B', pixres=20)
 
     return (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file,
@@ -112,7 +123,7 @@ def generate_classification_from_safe(filesafe: Path, workspace: Path, training:
 
 
 def generate_class_from_safe(filesafe: Path, output: Path, training: Path, classes: List[int],
-                             minimal_support: int, suffix: str, pixres: int) -> (Path, Path):
+                             minimal_support: int, quantization_levels: int, suffix: str, pixres: int) -> (Path, Path):
     """
     Generate classification results at a given pixel resolution and for a given domain from a S2 input (.SAFE or .zip)
 
@@ -126,6 +137,8 @@ def generate_class_from_safe(filesafe: Path, output: Path, training: Path, class
         the list of classes to extract from data
     :param minimal_support: int
         the minimal support value
+    :param quantization_levels:
+        the number of quantization levels
     :param suffix: str
         the letter of the processing domain: A or B
     :param pixres: int
@@ -142,7 +155,8 @@ def generate_class_from_safe(filesafe: Path, output: Path, training: Path, class
         vrt_20m_file = read_s2_bands_as_vrt(safe_file=filesafe, pixres=20, output=tmp)
 
         class_file, class_phi_file = generate_class(file_10m=vrt_10m_file, file_20m=vrt_20m_file, output=tmp,
-                                                    training=training, classes=classes, minimal_support=minimal_support,
+                                                    training=training, classes=classes,
+                                                    minimal_support=minimal_support, quantization_levels=quantization_levels,
                                                     suffix=suffix, pixres=pixres)
 
         # Move results to workspace
@@ -201,7 +215,7 @@ def read_s2_bands_as_vrt(safe_file: Path, pixres: int, output: Path) -> Path:
 
 
 def generate_class(file_10m: Path, file_20m: Path, output: Path, training: Path, classes: List[int],
-                   suffix: str, pixres: int, minimal_support=100) -> (Path, Path):
+                   suffix: str, pixres: int, minimal_support=100, quantization_levels=8) -> (Path, Path):
     """
     Generate classification results at a given pixel resolution and at given domain from S2 mosaics (GeoTIFF format)
 
@@ -216,7 +230,9 @@ def generate_class(file_10m: Path, file_20m: Path, output: Path, training: Path,
     :param classes: List[int]
         the list of classes to extract from data
     :param minimal_support: int
-        the minimal support value can be any integer (default is 100)
+        the minimal support value can be any positive integer (default is 100)
+    :param quantization_levels:
+        the number of quantization levels can be any positive integer (default is 8)
     :param suffix: str
         the letter of the processing domain: A or B
     :param pixres: int
@@ -240,7 +256,9 @@ def generate_class(file_10m: Path, file_20m: Path, output: Path, training: Path,
         domain = split_domain(file_10m=file_10m, file_20m=file_20m, suffix=suffix, pixres=pixres)
 
         class_file, class_phi_file = process_domain(datafile=main_vrt, suffix=suffix, domain=domain,
-                                                    training=training, classes=classes, minimal_support=minimal_support,
+                                                    training=training, classes=classes,
+                                                    minimal_support=minimal_support,
+                                                    quantization_levels=quantization_levels,
                                                     output=tmp)
 
         # Move results to output folder
@@ -342,7 +360,7 @@ def threshold_otsu(image: np.ndarray) -> int:
 
 
 def process_domain(datafile: Path, suffix: str, domain: np.ndarray, training: Path, classes: List[int],
-                   minimal_support: int, output: Path) -> (Path, Path):
+                   minimal_support: int, quantization_levels: int, output: Path) -> (Path, Path):
     """
     Produce classification results for a given domain
 
@@ -358,6 +376,8 @@ def process_domain(datafile: Path, suffix: str, domain: np.ndarray, training: Pa
         the list of classes to extract from data
     :param minimal_support: int
         the minimal support value
+    :param quantization_levels: int
+        the number of quantization levels (e.g 8 means 1 2 4 8 16 32 64 128)
 
     :param output: Path
         the complete path where to write results
@@ -370,9 +390,11 @@ def process_domain(datafile: Path, suffix: str, domain: np.ndarray, training: Pa
 
     dataquant_file = data_quantile(datafile=datafile, suffix=suffix, domain=domain, nlevels=256, output=output)
 
+    logs(f'Number of quantization levels: {quantization_levels}')
+    # list of quantization values: 1 2 4 8 16 32 64 128 etc.
+    quantizations = np.power(2, np.arange(quantization_levels))
+
     logs('Sequence data encoding minimal-support multiple-quantization')
-    # list of quantization values: 1 2 4 8 16 32 64 128
-    quantizations = np.power(2, np.arange(8))
     domain_minsupp, datastack_mulquan = sml_minimal_support_multiple_quantization(
         datafile=dataquant_file,
         levels=256,

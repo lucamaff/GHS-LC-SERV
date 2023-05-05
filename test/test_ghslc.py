@@ -348,6 +348,7 @@ def test_generate_class_creates_both_landcover_and_phi_output(s2_data, cgls_data
         training=cgls_data,
         classes=target_classes,
         minimal_support=100,
+        quantization_levels=8,
         suffix='A',
         pixres=10,
     )
