@@ -29,7 +29,8 @@ logs = print
 
 
 def generate_classification_from_mosaics(file_10m: Path, file_20m: Path, workspace: Path, training: Path,
-                                         classes: List[int], minimal_support=100, quantization_levels=8) -> Iterable[Path]:
+                                         classes: List[int], minimal_support=100, quantization_levels=8,
+                                         workflow='full') -> Iterable[Path]:
     """
     Generate classification results at 10 and 20 meters for both domains A and B from S2 mosaics (GeoTIFF format)
 
@@ -47,37 +48,52 @@ def generate_classification_from_mosaics(file_10m: Path, file_20m: Path, workspa
         the minimal support value can be any positive integer (default is 100)
     :param quantization_levels:
         the number of quantization levels can be any positive integer (default is 8)
+    :param workflow: str
+        the workflow to use for classification:
+        - 10m: process only 10 meter bands
+        - 20m: process only 20 meter bands
+        - full: process all bands (default)
 
     :return: Iterable[Path]
         the complete path to all classified results saved on disk
     """
 
-    cl_a_10m_file, phi_a_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes,
-                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                   suffix='A', pixres=10)
+    assert workflow in ['10m', '20m', 'full']
 
-    cl_b_10m_file, phi_b_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes,
-                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                   suffix='B', pixres=10)
+    output10m = ()
+    if workflow == 'full' or workflow == '10m':
+        cl_a_10m_file, phi_a_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
+                                                       training=training, classes=classes,
+                                                       minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                       suffix='A', pixres=10)
 
-    cl_a_20m_file, phi_a_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes,
-                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                   suffix='A', pixres=20)
+        cl_b_10m_file, phi_b_10m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
+                                                       training=training, classes=classes,
+                                                       minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                       suffix='B', pixres=10)
 
-    cl_b_20m_file, phi_b_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
-                                                   training=training, classes=classes,
-                                                   minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                   suffix='B', pixres=20)
+        output10m = (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file)
 
-    return (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file,
-            cl_a_20m_file, phi_a_20m_file, cl_b_20m_file, phi_b_20m_file)
+    output20m = ()
+    if workflow == 'full' or workflow == '20m':
+        cl_a_20m_file, phi_a_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
+                                                       training=training, classes=classes,
+                                                       minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                       suffix='A', pixres=20)
+
+        cl_b_20m_file, phi_b_20m_file = generate_class(file_10m=file_10m, file_20m=file_20m, output=workspace,
+                                                       training=training, classes=classes,
+                                                       minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                       suffix='B', pixres=20)
+
+        output20m = (cl_a_20m_file, phi_a_20m_file, cl_b_20m_file, phi_b_20m_file)
+
+    return output10m + output20m
 
 
 def generate_classification_from_safe(filesafe: Path, workspace: Path, training: Path, classes: List[int],
-                                      minimal_support=100, quantization_levels=8) -> Iterable[Path]:
+                                      minimal_support=100, quantization_levels=8,
+                                      workflow='full') -> Iterable[Path]:
     """
     Generate classification results at 10 and 20 meters for both domains A and B from a S2 input (.SAFE or .zip)
 
@@ -93,33 +109,47 @@ def generate_classification_from_safe(filesafe: Path, workspace: Path, training:
         the minimal support value can be any positive integer (default is 100)
     :param quantization_levels:
         the number of quantization levels can be any positive integer (default is 8)
+    :param workflow: str
+        the workflow to use for classification:
+        - 10m: process only 10 meter bands
+        - 20m: process only 20 meter bands
+        - full: process all bands (default)
 
     :return: Iterable[Path]
         the complete path to all classified results saved on disk
     """
 
-    cl_a_10m_file, phi_a_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
-                                                             training=training, classes=classes,
-                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                             suffix='A', pixres=10)
+    assert workflow in ['10m', '20m', 'full']
 
-    cl_b_10m_file, phi_b_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
-                                                             training=training, classes=classes,
-                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                             suffix='B', pixres=10)
+    output10m = ()
+    if workflow == 'full' or workflow == '10m':
+        cl_a_10m_file, phi_a_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                                 training=training, classes=classes,
+                                                                 minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                                 suffix='A', pixres=10)
 
-    cl_a_20m_file, phi_a_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
-                                                             training=training, classes=classes,
-                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                             suffix='A', pixres=20)
+        cl_b_10m_file, phi_b_10m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                                 training=training, classes=classes,
+                                                                 minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                                 suffix='B', pixres=10)
 
-    cl_b_20m_file, phi_b_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
-                                                             training=training, classes=classes,
-                                                             minimal_support=minimal_support, quantization_levels=quantization_levels,
-                                                             suffix='B', pixres=20)
+        output10m = (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file)
 
-    return (cl_a_10m_file, phi_a_10m_file, cl_b_10m_file, phi_b_10m_file,
-            cl_a_20m_file, phi_a_20m_file, cl_b_20m_file, phi_b_20m_file)
+    output20m = ()
+    if workflow == 'full' or workflow == '20m':
+        cl_a_20m_file, phi_a_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                                 training=training, classes=classes,
+                                                                 minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                                 suffix='A', pixres=20)
+
+        cl_b_20m_file, phi_b_20m_file = generate_class_from_safe(filesafe=filesafe, output=workspace,
+                                                                 training=training, classes=classes,
+                                                                 minimal_support=minimal_support, quantization_levels=quantization_levels,
+                                                                 suffix='B', pixres=20)
+
+        output20m = (cl_a_20m_file, phi_a_20m_file, cl_b_20m_file, phi_b_20m_file)
+
+    return output10m + output20m
 
 
 def generate_class_from_safe(filesafe: Path, output: Path, training: Path, classes: List[int],
@@ -147,6 +177,9 @@ def generate_class_from_safe(filesafe: Path, output: Path, training: Path, class
     :return: (Path, Path)
         the complete path to the classified file and the phi value file
     """
+
+    assert suffix in ['A', 'B']
+    assert pixres in [10, 20]
 
     logs('Create scratch folder')
     with tempfile.TemporaryDirectory(dir=output, prefix=f'{filesafe.stem}_scratch_{pixres}m_{suffix}_') as tmp:
@@ -242,6 +275,9 @@ def generate_class(file_10m: Path, file_20m: Path, output: Path, training: Path,
         the complete path to the classified file and the phi value file
     """
 
+    assert suffix in ['A', 'B']
+    assert pixres in [10, 20]
+
     if pixres == 10:
         main_vrt = file_10m
     else:
@@ -286,6 +322,9 @@ def split_domain(file_10m: Path, file_20m: Path, suffix: str, pixres: int) -> np
     :return: np.ndarray
         the chosen domain A or B
     """
+
+    assert suffix in ['A', 'B']
+    assert pixres in [10, 20]
 
     with rasterio.open(file_10m) as src_10m:
         data = src_10m.read()
@@ -385,6 +424,8 @@ def process_domain(datafile: Path, suffix: str, domain: np.ndarray, training: Pa
     :return: (Path, Path)
         the complete path to the classified file and the phi value file
     """
+
+    assert suffix in ['A', 'B']
 
     logs('Process domain: {}'.format(suffix))
 
@@ -644,6 +685,8 @@ def s2_multiple_classification(datafile: Path, suffix: str, domain_valid: np.nda
     :param output: Path
         the complete path where to store classification results
     """
+
+    assert suffix in ['A', 'B']
 
     with rasterio.open(datafile) as src:
         profile = src.profile.copy()
